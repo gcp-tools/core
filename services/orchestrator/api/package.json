@@ -1,0 +1,26 @@
+{
+  "name": "@gcp-tools/agents-orchestrator-api",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "dev": "vitest watch",
+    "start": "node dist/index.js",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.16.0",
+    "@temporalio/client": "^1.11.8",
+    "@temporalio/worker": "^1.11.8",
+    "axios": "^1.6.8",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.14.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8"
+  }
+}
