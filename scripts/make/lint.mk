@@ -1,5 +1,3 @@
-include scripts/make/common.mk
-
 .PHONY: lint lint-service
 
 ## lint~~ Lint all services and their components, or specific service/component if parameters are set

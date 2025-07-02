@@ -1,5 +1,3 @@
-include scripts/make/common.mk
-
 .PHONY: build build-service
 
 ## build~~ Build all services and their components, or specific service/component if parameters are set

@@ -1,5 +1,3 @@
-include scripts/make/common.mk
-
 .PHONY: install install-service
 
 ## install~~ Install dependencies for all services and their components, or specific service/component if parameters are set
