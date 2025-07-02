@@ -1,29 +1,25 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import uvicorn
-from agents import SpecAgent, PlannerAgent, AdvancedSpecAgent, AdvancedPlannerAgent, AdvancedCodegenAgent, AdvancedInfraAgent, AdvancedTestAgent, AdvancedReviewerAgent, AdvancedOpsAgent
+from agents import PlannerAgent, AdvancedPlannerAgent, AdvancedCodegenAgent, AdvancedInfraAgent, AdvancedTestAgent, AdvancedReviewerAgent, AdvancedOpsAgent
+from handlers.spec_handler import router as spec_router
+from handlers.planner_handler import router as planner_router
+from handlers.codegen_handler import router as codegen_router
+from handlers.infra_handler import router as infra_router
+from handlers.test_handler import router as test_router
+from handlers.review_handler import router as review_router
+from handlers.ops_handler import router as ops_router
 
 app = FastAPI(title="CrewAI Agent API")
 
-@app.post("/spec")
-async def spec_endpoint(request: Request):
-    data = await request.json()
-    if data.get('advanced'):
-        agent = AdvancedSpecAgent()
-    else:
-        agent = SpecAgent()
-    result = agent.run(data)
-    return JSONResponse(result)
-
-@app.post("/plan")
-async def plan_endpoint(request: Request):
-    data = await request.json()
-    if data.get('advanced'):
-        agent = AdvancedPlannerAgent()
-    else:
-        agent = PlannerAgent()
-    result = agent.run(data)
-    return JSONResponse(result)
+# Include the /agent/spec, /agent/plan, /agent/codegen, /agent/infra, /agent/test, /agent/review, and /agent/ops endpoints from the new handlers
+app.include_router(spec_router)
+app.include_router(planner_router)
+app.include_router(codegen_router)
+app.include_router(infra_router)
+app.include_router(test_router)
+app.include_router(review_router)
+app.include_router(ops_router)
 
 @app.post("/codegen")
 async def codegen_endpoint(request: Request):
