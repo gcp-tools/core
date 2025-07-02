@@ -1,5 +1,5 @@
-import { LocalArtifactManager } from './localArtifactManager.js'
-// import { GCSArtifactManager } from './gcsArtifactManager.js';
+import { LocalArtifactManager } from './local-artifact-manager.js'
+// import { GCSArtifactManager } from './gcs-artifact-manager.js';
 import type { ArtifactManager } from './types.js'
 
 export function getArtifactManager(): ArtifactManager {

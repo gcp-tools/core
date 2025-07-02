@@ -12,7 +12,6 @@ vi.mock('@temporalio/workflow', () => ({
         technologies: ['typescript', 'python'],
         description: 'Test workflow plan',
       }
-      console.log('Mock planActivity returning:', { result: planResult, input })
       return { result: planResult, input }
     }),
     codegenActivity: vi.fn(async (input) => ({ result: 'codegen', input })),
@@ -24,25 +23,15 @@ vi.mock('@temporalio/workflow', () => ({
 }))
 
 describe('fullAgentWorkflow', () => {
-  it('calls all 7 activities in order and returns results', async () => {
+  it('pauses after plan step and returns HITL pause object', async () => {
     const input = { foo: 'bar' }
     const result = await workflow.fullAgentWorkflow(input)
-    expect(result).toEqual([
-      { result: 'spec', input },
-      {
-        result: {
-          workflowId: 'test-wf',
-          steps: ['spec', 'plan', 'codegen', 'test', 'infra', 'review', 'ops'],
-          technologies: ['typescript', 'python'],
-          description: 'Test workflow plan',
-        },
-        input,
-      },
-      { result: 'codegen', input },
-      { result: 'test', input },
-      { result: 'infra', input },
-      { result: 'review', input },
-      { result: 'ops', input },
-    ])
+    expect(result).toHaveProperty('status', 'paused')
+    expect(result).toHaveProperty('hitl')
+    expect(result.hitl).toHaveProperty('step', 'plan')
+    expect(result.hitl).toHaveProperty('artifactPath')
+    expect(result.hitl).toHaveProperty('id')
+    expect(result.hitl).toHaveProperty('status', 'paused')
+    expect(result.hitl).toHaveProperty('createdAt')
   })
 })

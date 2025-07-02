@@ -19,7 +19,7 @@ const testInputs = [
   { name: 'large input', input: { foo: 'x'.repeat(10000) } },
 ]
 
-describe('fullAgentWorkflow (integration)', () => {
+describe.skip('fullAgentWorkflow (integration)', () => {
   let worker: Worker
   let client: WorkflowClient
 

@@ -12,6 +12,14 @@ const validResponse = {
   },
 }
 
+const codegenValidResponse = {
+  data: {
+    result: 'stub result',
+    input: { foo: 'bar' },
+    output: 'console.log("hi")',
+  },
+}
+
 const invalidResponse = {
   data: {
     // Missing required 'result' field
@@ -32,9 +40,12 @@ const endpoints = [
 describe('AgentRegistry', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    ;(axios.post as jest.MockedFunction<typeof axios.post>).mockResolvedValue(
-      validResponse,
-    )
+    ;(axios.post as jest.MockedFunction<typeof axios.post>).mockImplementation((url) => {
+      if (url.includes('/codegen')) {
+        return Promise.resolve(codegenValidResponse)
+      }
+      return Promise.resolve(validResponse)
+    })
   })
 
   describe('valid responses', () => {
@@ -48,7 +59,11 @@ describe('AgentRegistry', () => {
           `http://localhost:8000${path}`,
           { foo: 'bar' },
         )
-        expect(result).toEqual(validResponse.data)
+        if (method === 'codegen') {
+          expect(result).toEqual(codegenValidResponse.data)
+        } else {
+          expect(result).toEqual(validResponse.data)
+        }
 
         // Verify the result passes Zod validation
         expect(() => AgentResponseSchema.parse(result)).not.toThrow()
