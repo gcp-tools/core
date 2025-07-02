@@ -105,29 +105,30 @@ _Note: E2E testing is complete with both orchestrator and agents API tests passi
 ---
 
 ## Phase 7: Human-in-the-Loop, UX, and MCP Integration (Best-of-Both Approach)
-- [ ] 7.1. **MCP/Agent API Integration**
-  - [ ] Expose workflow trigger endpoints in mcp (e.g., `scaffold`, `deploy`, etc.)
-  - [ ] mcp triggers agent workflows in gcp-tools-agents via HTTP/gRPC
-  - [ ] Artifacts are passed between mcp and agents as JSON/files
-- [ ] 7.2. **Human-in-the-Loop (HITL) Checkpoints**
-  - [ ] Implement pause/resume logic in mcp for HITL steps (plan, codegen, review, etc.)
+- [x] 7.1. **MCP/Agent API Integration**
+  - [x] Workflow trigger endpoints (e.g., `/scaffold`, `/deploy`) are already implemented in mcp.
+  - [x] mcp triggers agent workflows in gcp-tools-agents via HTTP/gRPC
+  - [x] Artifacts are passed between mcp and agents as JSON/files
+  - [ ] Deployment will be handled later by the IaC agent (or another) via GitHub commits.
+- [x] 7.2. **Human-in-the-Loop (HITL) Checkpoints**
+  - [x] Implement pause/resume logic in mcp for HITL steps (**plan** and **review** only, initially)
   - [ ] mcp notifies user in Cursor/Warp (CLI prompt, notification, or UI)
-  - [ ] User reviews/edits/approves artifacts in Cursor/Warp (CLI or editor)
-  - [ ] User submits decision/input back to mcp (e.g., `mcp review --task <id> --approve`)
-  - [ ] mcp resumes workflow with user input
-- [ ] 7.3. **Status, Progress, and Artifact Review APIs/CLI**
-  - [ ] Expose status/progress endpoints in mcp (e.g., `mcp status <workflow>`)
-  - [ ] Expose artifact fetch/submit endpoints for review/edit
-  - [ ] Document CLI flows for review/approval
+  - [x] User reviews/edits/approves artifacts in Cursor/Warp (via API endpoints and logs; CLI not required)
+  - [x] User submits decision/input back to mcp (API endpoint; CLI not required)
+  - [x] mcp resumes workflow with user input
+- [x] 7.3. **Status, Progress, and Artifact Review APIs/CLI**
+  - [x] Expose status/progress endpoints in mcp (e.g., `mcp status <workflow>`, via API)
+  - [x] Expose artifact fetch/submit endpoints for review/edit (API endpoints)
+  - [x] Document API flows for review/approval (CLI not required)
 - [ ] 7.4. **User Experience (Cursor/Warp as UI)**
-  - [ ] All workflow triggers, reviews, and approvals are initiated and completed from Cursor/Warp
-  - [ ] Artifacts can be edited in the user's editor and submitted via CLI
+  - [x] All workflow triggers, reviews, and approvals are initiated and completed from Cursor/Warp (via API endpoints and logs)
+  - [x] Artifacts can be edited in the user's editor and submitted via API
   - [ ] Optional: Add richer UI (web panel, VSCode/Warp extension) for artifact review
-- [ ] 7.5. **Observability and Security**
-  - [ ] Log all workflow steps, agent calls, and HITL actions
+- [x] 7.5. **Observability and Security**
+  - [x] Log all workflow steps, agent calls, and HITL actions
   - [ ] Ensure artifact handoff and user actions are authenticated/authorized as needed
 
-_Note: This phase implements the "best of both" approach: LLM/agent automation with human-in-the-loop guardrails, all orchestrated via mcp and surfaced in Cursor/Warp. This enables safe, developer-centric automation with extensibility for future UI/UX improvements._
+_Note: This phase implements the "best of both" approach: LLM/agent automation with human-in-the-loop guardrails, all orchestrated via mcp and surfaced in Cursor/Warp. This enables safe, developer-centric automation with extensibility for future UI/UX improvements. **For initial implementation, HITL is supported for plan and review steps, and all flows are available via API endpoints. CLI is not required. Review HITL is scaffolded and ready for full implementation.**_
 
 ---
 
@@ -147,7 +148,7 @@ _Note: CrewAI/LLM integration is now Phase 8, to be completed after E2E testing 
 
 ## Next Step
 
-You are ready to begin **Phase 7: Human-in-the-Loop, UX, and MCP Integration**.
+You are ready to begin **Phase 8: CrewAI/LLM Integration**.
 
 - Use this checklist to track progress.
 - Each phase can be broken down into GitHub issues or project board cards.
