@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  orchestrator:
+    build:
+      context: ./services/orchestrator/api
+      dockerfile: Dockerfile
+    container_name: orchestrator
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./services/orchestrator/api/artifacts:/usr/src/app/artifacts
+    environment:
+      - AGENTS_URL=http://agents:8000
+      # Add orchestrator-specific env vars here if needed
+    working_dir: /usr/src/app
+    command: ["node", "dist/index.js"]
+
+  agents:
+    build:
+      context: ./services/agents/api
+      dockerfile: Dockerfile
+    container_name: agents
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/agents/api/artifacts:/app/artifacts
+    environment:
+      # Pass your API keys here, or use an .env file (see below)
+      # Example:
+      # OPENAI_API_KEY=sk-...your-key...
+    working_dir: /app
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Usage:
+# 1. Place your API keys in an .env file in the project root, or set them in the environment section above.
+# 2. Run: docker compose up --build
+# 3. Artifacts will be persisted to your local filesystem in the respective 'artifacts' folders.

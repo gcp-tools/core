@@ -13,7 +13,7 @@ import { runRustfmt, runRustfmtFormat } from '../utils/rustfmt.js'
 export class AgentRegistry {
   private readonly baseUrl: string
 
-  constructor(baseUrl = 'http://localhost:8000') {
+  constructor(baseUrl = process.env.AGENTS_URL || 'http://localhost:8000') {
     this.baseUrl = baseUrl
   }
 
