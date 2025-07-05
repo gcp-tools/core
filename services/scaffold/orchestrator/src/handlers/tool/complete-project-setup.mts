@@ -1,12 +1,7 @@
 import { exec as execCb } from 'node:child_process'
 import { promisify } from 'node:util'
 import { z } from 'zod'
-import type {
-  CompleteProjectSetupResult,
-  CreateGitHubRepoResult,
-  DependencyCheckResult,
-  SetupGitHubSecretsResult,
-} from '../../types.mjs'
+import type { CompleteProjectSetupResult } from '../../types.mjs'
 import { createGitHubEnvironments } from './create-github-environments.mjs'
 import { createGitHubRepo } from './create-github-repo.mjs'
 import { createSkeletonApp } from './create-skeleton-app.mjs'
@@ -101,9 +96,8 @@ export async function completeProjectSetup(
     const prereqResult = await installPrerequisites()
 
     if (
-      (prereqResult.summary as DependencyCheckResult[])?.some(
-        (r) => r.installed === false,
-      )
+      Array.isArray(prereqResult.summary) &&
+      prereqResult.summary.some((r) => r.installed === false)
     ) {
       results.step1 = {
         status: 'failed',
@@ -176,7 +170,7 @@ export async function completeProjectSetup(
 
     // Step 2: Create GitHub repository
     console.error('Step 2: Creating GitHub repository...')
-    const repoResult = (await createGitHubRepo({
+    const repoResult = await createGitHubRepo({
       repoName: args.projectName,
       githubIdentity: args.githubIdentity,
       description:
@@ -185,7 +179,7 @@ export async function completeProjectSetup(
       addReadme: true,
       addGitignore: true,
       addLicense: args.addLicense,
-    })) as CreateGitHubRepoResult
+    })
 
     if (repoResult.status === 'failed') {
       results.step2 = {
@@ -272,14 +266,15 @@ export async function completeProjectSetup(
 
     // Step 4: Setup GitHub secrets
     console.error('Step 4: Setting up GitHub secrets...')
-    const secretsResult = (await setupGitHubSecrets({
+    const secretsResult = await setupGitHubSecrets({
       ...foundationResult,
       repoName: repoFullName,
       regions: args.regions,
       orgId: args.orgId,
       billingAccount: args.billingAccount,
       ownerEmails: args.ownerEmails,
-    })) as SetupGitHubSecretsResult
+      developerIdentity: args.developerIdentity,
+    })
 
     if (secretsResult.status === 'failed') {
       results.step4 = {

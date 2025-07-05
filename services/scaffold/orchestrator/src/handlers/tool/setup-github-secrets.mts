@@ -25,6 +25,7 @@ export const SetupGitHubSecretsInputSchema = z.object({
   billingAccount: z.string().optional(),
   ownerEmails: z.string().optional(),
   developerIdentity: z.string().optional(),
+  githubIdentity: z.string(),
 })
 export type SetupGitHubSecretsInput = z.infer<
   typeof SetupGitHubSecretsInputSchema
@@ -62,15 +63,18 @@ export async function setupGitHubSecrets(
     return (
       'projectId' in obj &&
       'serviceAccount' in obj &&
-      'workloadIdentityProviders' in obj
+      'workloadIdentityProviders' in obj &&
+      'githubIdentity' in obj
     )
   }
 
   const argsForGitHub = isFoundationResult(args)
     ? {
-        repoName: args.githubIdentity?.includes('/')
-          ? args.githubIdentity
-          : `${args.githubIdentity}/${args.projectId.replace(/-fdn-.*/, '')}`,
+        repoName:
+          args.repoName ||
+          (args.githubIdentity?.includes('/')
+            ? args.githubIdentity
+            : `${args.githubIdentity}/${args.projectId.replace(/-fdn-.*/, '')}`),
         projectId: args.projectId,
         serviceAccount: args.serviceAccount,
         workloadIdentityPool: args.workloadIdentityProviders?.dev || '',
@@ -82,7 +86,15 @@ export async function setupGitHubSecrets(
         ownerEmails: args.ownerEmails,
         developerIdentity: args.developerIdentity,
       }
-    : args
+    : {
+        ...args,
+        repoName: args.repoName || '',
+      }
+
+  console.error(
+    '[DEBUG] argsForGitHub:',
+    JSON.stringify(argsForGitHub, null, 2),
+  )
 
   try {
     // Check if GitHub CLI is available and authenticated
@@ -213,6 +225,12 @@ export async function setupGitHubSecrets(
         githubIdentity = argsForGitHub.repoName.split('/')[0]
         projectName = argsForGitHub.repoName.split('/')[1]
       }
+    }
+    // If repoName is provided directly, use it to extract githubIdentity and projectName
+    if (argsForGitHub.repoName?.includes('/')) {
+      const [org, repo] = argsForGitHub.repoName.split('/')
+      githubIdentity = org
+      projectName = repo
     }
     // Use the full regions string if present
     const fullRegions =
