@@ -18,7 +18,7 @@ To get started with the gcp-tools-core monorepo:
 1. **Clone the repository:**
 
    ```bash
-   git clone <your-repo-url>
+   git clone git@github.com:gcp-tools/core.git gcp-tools-core
    cd gcp-tools-core
    ```
 
