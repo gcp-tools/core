@@ -1,0 +1,25 @@
+{
+  "name": "@gcp-tools/core-services-codegen-orchestrator",
+  "description": "gcp-tools | core | services | codegen | orchestrator",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --passWithNoTests",
+    "dev": "vitest watch",
+    "start": "node dist/index.js",
+    "lint": "biome check --write"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.15.0",
+    "zod": "^3.25.67",
+    "zod-to-json-schema": "^3.24.6"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.14.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "@gcp-tools/core-services-scaffold-orchestrator",
+  "description": "gcp-tools | core | services | scaffold | orchestrator",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "scripts": {
+    "build": "tsc --pretty",
+    "clean": "rm -rf coverage dist",
+    "dev": "tsx src/index.mts",
+    "lint": "biome check src --write",
+    "test": "vitest run --passWithNoTests",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "gcp",
+    "cdktf",
+    "infrastructure",
+    "terraform"
+  ],
+  "author": "GCP Tools Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@modelcontextprotocol/sdk": "^1.15.0",
+    "@types/node": "^22.15.34",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.2",
+    "vitest": "^3.2.4",
+    "zod": "^3.25.67"
+  },
+  "dependencies": {
+    "zod-to-json-schema": "^3.24.6"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ]
+}

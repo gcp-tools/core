@@ -1,0 +1,6 @@
+pydantic
+pytest
+python-dotenv
+crewai
+ruff
+modelcontextprotocol
