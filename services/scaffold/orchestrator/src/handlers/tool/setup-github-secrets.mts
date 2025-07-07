@@ -32,7 +32,10 @@ export type SetupGitHubSecretsInput = z.infer<
 export async function setupGitHubSecrets(
   input: unknown,
 ): Promise<SetupGitHubSecretsResult> {
-  console.error('[DEBUG] setupGitHubSecrets RAW input:', JSON.stringify(input, null, 2))
+  console.error(
+    '[DEBUG] setupGitHubSecrets RAW input:',
+    JSON.stringify(input, null, 2),
+  )
   const parsed = SetupGitHubSecretsInputSchema.safeParse(input)
   if (!parsed.success) {
     return {
