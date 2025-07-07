@@ -46,7 +46,12 @@ export async function completeProjectSetup(
         step2: {
           status: 'failed',
           message: zodErrorString,
-          details: { status: 'failed', message: zodErrorString },
+          details: {
+            status: 'failed',
+            message: zodErrorString,
+            githubIdentity: '',
+            projectName: '',
+          },
         },
         step3: {
           status: 'failed',
@@ -64,7 +69,8 @@ export async function completeProjectSetup(
           message: zodErrorString,
           details: {
             status: 'failed',
-            repoName: '',
+            githubIdentity: '',
+            projectName: '',
             results: [],
             summary: {
               secretsCreated: 0,
@@ -171,8 +177,8 @@ export async function completeProjectSetup(
     // Step 2: Create GitHub repository
     console.error('Step 2: Creating GitHub repository...')
     const repoResult = await createGitHubRepo({
-      repoName: args.projectName,
       githubIdentity: args.githubIdentity,
+      projectName: args.projectName,
       description:
         args.repoDescription || `GCP infrastructure for ${args.projectName}`,
       isPrivate: args.isPrivate !== false,
@@ -230,10 +236,10 @@ export async function completeProjectSetup(
     }
 
     // Step 3.5: Create GitHub environments before secrets
-    const repoFullName = args.githubIdentity?.includes('/')
-      ? args.githubIdentity
-      : `${args.githubIdentity}/${args.projectName}`
-    const envResult = await createGitHubEnvironments({ repoName: repoFullName })
+    const envResult = await createGitHubEnvironments({
+      githubIdentity: args.githubIdentity,
+      projectName: args.projectName,
+    })
     if (envResult.status !== 'success') {
       results.step4 = {
         status: 'partial',
@@ -241,7 +247,8 @@ export async function completeProjectSetup(
         details: {
           status: 'failed',
           message: envResult.message,
-          repoName: repoFullName,
+          githubIdentity: args.githubIdentity,
+          projectName: args.projectName,
           results: (envResult.results ?? []).map((r) => ({
             name: 'GITHUB_ENVIRONMENT',
             type: 'environment',
@@ -268,7 +275,8 @@ export async function completeProjectSetup(
     console.error('Step 4: Setting up GitHub secrets...')
     const secretsResult = await setupGitHubSecrets({
       ...foundationResult,
-      repoName: repoFullName,
+      githubIdentity: args.githubIdentity,
+      projectName: args.projectName,
       regions: args.regions,
       orgId: args.orgId,
       billingAccount: args.billingAccount,

@@ -1,6 +1,7 @@
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
 import { z } from 'zod'
+import { createRepoName } from '../../lib/repo.mjs'
 import type { CreateGitHubRepoResult } from '../../types.mjs'
 
 const execAsync = promisify(exec)
@@ -22,8 +23,8 @@ async function listGitHubRepos(githubIdentity: string): Promise<string[]> {
 }
 
 export const CreateGitHubRepoInputSchema = z.object({
-  repoName: z.string(),
   githubIdentity: z.string(),
+  projectName: z.string(),
   description: z.string().optional(),
   isPrivate: z.boolean().optional(),
   addReadme: z.boolean().optional(),
@@ -42,10 +43,15 @@ export async function createGitHubRepo(
       status: 'failed',
       message: 'Invalid input',
       error: parsed.error.message,
+      githubIdentity: '',
+      projectName: '',
     }
   }
   const args = parsed.data
-  const fullRepoName = `${args.githubIdentity}/${args.repoName}`
+  const fullRepoName = createRepoName({
+    githubIdentity: args.githubIdentity,
+    projectName: args.projectName,
+  })
   try {
     // Check if GitHub CLI is available
     try {
@@ -56,6 +62,8 @@ export async function createGitHubRepo(
         message:
           'GitHub CLI (gh) is not installed. Please install it first: https://cli.github.com/',
         error: 'GitHub CLI not found',
+        githubIdentity: args.githubIdentity,
+        projectName: args.projectName,
       }
     }
 
@@ -67,19 +75,22 @@ export async function createGitHubRepo(
         status: 'failed',
         message: 'Not authenticated with GitHub. Please run: gh auth login',
         error: 'GitHub authentication required',
+        githubIdentity: args.githubIdentity,
+        projectName: args.projectName,
       }
     }
 
     // Check if repo already exists
     const repos = await listGitHubRepos(args.githubIdentity)
-    if (repos.includes(args.repoName)) {
+    if (repos.includes(args.projectName)) {
       console.error(
         `[info] GitHub repo ${fullRepoName} already exists. Skipping creation.`,
       )
       return {
         status: 'success',
         message: 'GitHub repository already exists. Skipped creation.',
-        repoName: fullRepoName,
+        githubIdentity: args.githubIdentity,
+        projectName: args.projectName,
         repoUrl: `https://github.com/${fullRepoName}`,
         isPrivate: args.isPrivate !== false,
       }
@@ -118,7 +129,8 @@ export async function createGitHubRepo(
     return {
       status: 'success',
       message: 'GitHub repository created successfully',
-      repoName: fullRepoName,
+      githubIdentity: args.githubIdentity,
+      projectName: args.projectName,
       repoUrl: repoUrl,
       isPrivate: args.isPrivate !== false,
     }
@@ -128,6 +140,8 @@ export async function createGitHubRepo(
       status: 'failed',
       message: `GitHub repository creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       error: error instanceof Error ? error.message : 'Unknown error',
+      githubIdentity: args.githubIdentity,
+      projectName: args.projectName,
     }
   }
 }

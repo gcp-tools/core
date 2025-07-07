@@ -1,6 +1,7 @@
 import { exec as execCb } from 'node:child_process'
 import { promisify } from 'node:util'
 import { z } from 'zod'
+import { createRepoName } from '../../lib/repo.mjs'
 
 const exec = promisify(execCb)
 
@@ -14,13 +15,16 @@ export type PollGithubDeploymentParams = {
 
 export type PollGithubDeploymentResult = {
   status: 'success' | 'failure' | 'cancelled' | 'timeout' | 'error'
+  githubIdentity: string
+  projectName: string
   conclusion?: string
   runId?: number
   message?: string
 }
 
 export const PollGithubDeploymentInputSchema = z.object({
-  repo: z.string(),
+  githubIdentity: z.string(),
+  projectName: z.string(),
   workflow: z.string(),
   ref: z.string().optional(),
   interval: z.number().optional(),
@@ -42,10 +46,20 @@ export async function pollGithubDeployment(
   if (!parsed.success) {
     return {
       status: 'error',
+      githubIdentity: '',
+      projectName: '',
       message: 'Invalid input',
     }
   }
-  const { repo, workflow, ref, interval = 30, timeout = 600 } = parsed.data
+  const {
+    githubIdentity,
+    projectName,
+    workflow,
+    ref,
+    interval = 30,
+    timeout = 600,
+  } = parsed.data
+  const repo = createRepoName({ githubIdentity, projectName })
   const start = Date.now()
   const deadline = start + timeout * 1000
   let lastConclusion = ''
@@ -69,6 +83,8 @@ export async function pollGithubDeployment(
       if (['completed'].includes(run.status)) {
         return {
           status: run.conclusion || 'success',
+          githubIdentity,
+          projectName,
           conclusion: run.conclusion,
           runId: run.databaseId,
           message: `Workflow completed with status: ${run.conclusion}`,
@@ -77,6 +93,8 @@ export async function pollGithubDeployment(
     } catch (error) {
       return {
         status: 'error',
+        githubIdentity,
+        projectName,
         message: `Polling failed: ${error instanceof Error ? error.message : String(error)}`,
       }
     }
@@ -84,6 +102,8 @@ export async function pollGithubDeployment(
   }
   return {
     status: 'timeout',
+    githubIdentity,
+    projectName,
     conclusion: lastConclusion,
     runId: lastRunId,
     message: 'Polling timed out before workflow completed',

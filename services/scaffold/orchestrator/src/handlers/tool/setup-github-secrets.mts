@@ -1,13 +1,14 @@
 import { exec as execCb } from 'node:child_process'
 import { promisify } from 'node:util'
 import { z } from 'zod'
-import type { FoundationSetupResult } from '../../lib/setup-foundation-project.mjs'
+import { createRepoName } from '../../lib/repo.mjs'
 import type { SetupGitHubSecretsResult } from '../../types.mjs'
 
 const execAsync = promisify(execCb)
 
 export const SetupGitHubSecretsInputSchema = z.object({
-  repoName: z.string(),
+  githubIdentity: z.string(),
+  projectName: z.string(),
   projectId: z.string(),
   serviceAccount: z.string(),
   workloadIdentityPool: z.string(),
@@ -25,7 +26,6 @@ export const SetupGitHubSecretsInputSchema = z.object({
   billingAccount: z.string().optional(),
   ownerEmails: z.string().optional(),
   developerIdentity: z.string().optional(),
-  githubIdentity: z.string(),
 })
 export type SetupGitHubSecretsInput = z.infer<
   typeof SetupGitHubSecretsInputSchema
@@ -40,7 +40,8 @@ export async function setupGitHubSecrets(
       status: 'failed',
       message: 'Invalid input',
       error: parsed.error.message,
-      repoName: '',
+      githubIdentity: '',
+      projectName: '',
       results: [],
       summary: {
         secretsCreated: 0,
@@ -51,49 +52,14 @@ export async function setupGitHubSecrets(
     }
   }
   const args = parsed.data
+  const repoName = createRepoName({
+    githubIdentity: args.githubIdentity,
+    projectName: args.projectName,
+  })
 
   console.error(
     '[DEBUG] setupGitHubSecrets input:',
     JSON.stringify(args, null, 2),
-  )
-
-  // Type guard: is this a FoundationSetupResult?
-  const isFoundationResult = (obj: unknown): obj is FoundationSetupResult => {
-    if (!obj || typeof obj !== 'object') return false
-    return (
-      'projectId' in obj &&
-      'serviceAccount' in obj &&
-      'workloadIdentityProviders' in obj &&
-      'githubIdentity' in obj
-    )
-  }
-
-  const argsForGitHub = isFoundationResult(args)
-    ? {
-        repoName:
-          args.repoName ||
-          (args.githubIdentity?.includes('/')
-            ? args.githubIdentity
-            : `${args.githubIdentity}/${args.projectId.replace(/-fdn-.*/, '')}`),
-        projectId: args.projectId,
-        serviceAccount: args.serviceAccount,
-        workloadIdentityPool: args.workloadIdentityProviders?.dev || '',
-        projectNumber: args.projectNumber,
-        workloadIdentityProviders: args.workloadIdentityProviders,
-        regions: args.regions,
-        orgId: args.orgId,
-        billingAccount: args.billingAccount,
-        ownerEmails: args.ownerEmails,
-        developerIdentity: args.developerIdentity,
-      }
-    : {
-        ...args,
-        repoName: args.repoName || '',
-      }
-
-  console.error(
-    '[DEBUG] argsForGitHub:',
-    JSON.stringify(argsForGitHub, null, 2),
   )
 
   try {
@@ -105,7 +71,8 @@ export async function setupGitHubSecrets(
         status: 'failed',
         message: 'Not authenticated with GitHub. Please run: gh auth login',
         error: 'GitHub authentication required',
-        repoName: argsForGitHub.repoName,
+        githubIdentity: args.githubIdentity,
+        projectName: args.projectName,
         results: [],
         summary: {
           secretsCreated: 0,
@@ -127,7 +94,7 @@ export async function setupGitHubSecrets(
     for (const env of environments) {
       // Set GCP_TOOLS_ENVIRONMENT variable
       try {
-        const cmd = `gh variable set GCP_TOOLS_ENVIRONMENT --repo ${argsForGitHub.repoName} --env ${env} --body "${env}"`
+        const cmd = `gh variable set GCP_TOOLS_ENVIRONMENT --repo ${repoName} --env ${env} --body "${env}"`
         await execAsync(cmd)
         results.push({
           name: 'GCP_TOOLS_ENVIRONMENT',
@@ -145,10 +112,10 @@ export async function setupGitHubSecrets(
         })
       }
       // Set GCP_TOOLS_WORKLOAD_IDENTITY_PROVIDER secret
-      const provider = argsForGitHub.workloadIdentityProviders?.[env]
+      const provider = args.workloadIdentityProviders?.[env]
       if (provider) {
         try {
-          const cmd = `gh secret set GCP_TOOLS_WORKLOAD_IDENTITY_PROVIDER --repo ${argsForGitHub.repoName} --env ${env} --body "${provider}"`
+          const cmd = `gh secret set GCP_TOOLS_WORKLOAD_IDENTITY_PROVIDER --repo ${repoName} --env ${env} --body "${provider}"`
           await execAsync(cmd)
           results.push({
             name: 'GCP_TOOLS_WORKLOAD_IDENTITY_PROVIDER',
@@ -172,30 +139,30 @@ export async function setupGitHubSecrets(
     const secrets = [
       {
         name: 'GCP_TOOLS_BILLING_ACCOUNT',
-        value: argsForGitHub.billingAccount,
+        value: args.billingAccount,
       },
       {
         name: 'GCP_TOOLS_FOUNDATION_PROJECT_ID',
-        value: argsForGitHub.projectId,
+        value: args.projectId,
       },
-      { name: 'GCP_TOOLS_ORG_ID', value: argsForGitHub.orgId },
+      { name: 'GCP_TOOLS_ORG_ID', value: args.orgId },
       {
         name: 'GCP_TOOLS_SERVICE_ACCOUNT_EMAIL',
-        value: argsForGitHub.serviceAccount,
+        value: args.serviceAccount,
       },
       {
         name: 'GCP_TOOLS_FOUNDATION_PROJECT_NUMBER',
-        value: argsForGitHub.projectNumber,
+        value: args.projectNumber,
       },
       {
         name: 'GCP_TOOLS_TERRAFORM_REMOTE_STATE_BUCKET_ID',
-        value: `${argsForGitHub.projectId}-terraform-state`,
+        value: `${args.projectId}-terraform-state`,
       },
     ]
     for (const secret of secrets) {
       if (secret.value) {
         try {
-          const cmd = `gh secret set ${secret.name} --repo ${argsForGitHub.repoName} --body "${secret.value}"`
+          const cmd = `gh secret set ${secret.name} --repo ${repoName} --body "${secret.value}"`
           await execAsync(cmd)
           results.push({
             name: secret.name,
@@ -213,44 +180,24 @@ export async function setupGitHubSecrets(
       }
     }
 
-    // Extract githubIdentity and projectName for correct variable mapping
-    let githubIdentity = ''
-    let projectName = ''
-    if (isFoundationResult(args)) {
-      githubIdentity = args.githubIdentity || ''
-      projectName = args.projectId.replace(/-fdn-.*/, '')
-    } else {
-      // Try to parse from repoName if possible
-      if (argsForGitHub.repoName?.includes('/')) {
-        githubIdentity = argsForGitHub.repoName.split('/')[0]
-        projectName = argsForGitHub.repoName.split('/')[1]
-      }
-    }
-    // If repoName is provided directly, use it to extract githubIdentity and projectName
-    if (argsForGitHub.repoName?.includes('/')) {
-      const [org, repo] = argsForGitHub.repoName.split('/')
-      githubIdentity = org
-      projectName = repo
-    }
-    // Use the full regions string if present
-    const fullRegions =
-      isFoundationResult(args) && args.regions
-        ? args.regions
-        : argsForGitHub.regions
+    // Variable mapping
     const variables = [
       {
         name: 'GCP_TOOLS_DEVELOPER_IDENTITY_SPECIFIER',
-        value: argsForGitHub.developerIdentity,
+        value: args.developerIdentity,
       },
-      { name: 'GCP_TOOLS_GITHUB_IDENTITY_SPECIFIER', value: githubIdentity },
-      { name: 'GCP_TOOLS_PROJECT_NAME', value: projectName },
-      { name: 'GCP_TOOLS_OWNER_EMAILS', value: argsForGitHub.ownerEmails },
-      { name: 'GCP_TOOLS_REGIONS', value: fullRegions },
+      {
+        name: 'GCP_TOOLS_GITHUB_IDENTITY_SPECIFIER',
+        value: args.githubIdentity,
+      },
+      { name: 'GCP_TOOLS_PROJECT_NAME', value: args.projectName },
+      { name: 'GCP_TOOLS_OWNER_EMAILS', value: args.ownerEmails },
+      { name: 'GCP_TOOLS_REGIONS', value: args.regions },
     ]
     for (const variable of variables) {
       if (variable.value) {
         try {
-          const cmd = `gh variable set ${variable.name} --repo ${argsForGitHub.repoName} --body "${variable.value}"`
+          const cmd = `gh variable set ${variable.name} --repo ${repoName} --body "${variable.value}"`
           await execAsync(cmd)
           results.push({
             name: variable.name,
@@ -269,24 +216,8 @@ export async function setupGitHubSecrets(
     }
 
     // --- GCP_REGION variable ---
-    // try {
-    //   const cmd = `gh secret set GCP_TOOLS_REGIONS --repo ${argsForGitHub.repoName} --body "${fullRegions}"`
-    //   await execAsync(cmd)
-    //   results.push({
-    //     name: 'GCP_TOOLS_REGIONS',
-    //     type: 'secret',
-    //     status: 'created',
-    //   })
-    // } catch (error) {
-    //   results.push({
-    //     name: 'GCP_TOOLS_REGIONS',
-    //     type: 'secret',
-    //     status: 'failed',
-    //     error: String(error),
-    //   })
-    // }
     try {
-      const cmd = `gh variable set GCP_TOOLS_REGIONS --repo ${argsForGitHub.repoName} --body "${fullRegions}"`
+      const cmd = `gh variable set GCP_TOOLS_REGIONS --repo ${repoName} --body "${args.regions}"`
       await execAsync(cmd)
       results.push({
         name: 'GCP_TOOLS_REGIONS',
@@ -305,7 +236,8 @@ export async function setupGitHubSecrets(
     return {
       status: 'success',
       message: 'GitHub secrets and environment variables setup completed',
-      repoName: argsForGitHub.repoName,
+      githubIdentity: args.githubIdentity,
+      projectName: args.projectName,
       results: results,
       summary: {
         secretsCreated: results.filter(
@@ -324,7 +256,8 @@ export async function setupGitHubSecrets(
       status: 'failed',
       message: `GitHub secrets setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       error: error instanceof Error ? error.message : 'Unknown error',
-      repoName: argsForGitHub.repoName,
+      githubIdentity: args.githubIdentity,
+      projectName: args.projectName,
       results: [],
       summary: {
         secretsCreated: 0,

@@ -15,6 +15,8 @@ const exec = promisify(execCb)
 
 export type CreateSkeletonAppResult = {
   status: 'success' | 'failed'
+  githubIdentity: string
+  projectName: string
   message: string
   path?: string
   error?: string
@@ -62,6 +64,8 @@ export async function createSkeletonApp(
   if (!parsed.success) {
     return {
       status: 'failed',
+      githubIdentity: '',
+      projectName: '',
       message: 'Invalid input',
       error: parsed.error.message,
     }
@@ -74,6 +78,8 @@ export async function createSkeletonApp(
     if (existsSync(targetPath)) {
       return {
         status: 'failed',
+        githubIdentity,
+        projectName,
         message: `Target path already exists: ${targetPath}`,
         path: targetPath,
       }
@@ -121,12 +127,16 @@ export async function createSkeletonApp(
 
     return {
       status: 'success',
+      githubIdentity,
+      projectName,
       message: `Skeleton app created, rebranded, and pushed to ${githubIdentity}/${projectName}`,
       path: targetPath,
     }
   } catch (error) {
     return {
       status: 'failed',
+      githubIdentity: args.githubIdentity,
+      projectName: args.projectName,
       message: 'Failed to create skeleton app',
       error: error instanceof Error ? error.message : String(error),
     }

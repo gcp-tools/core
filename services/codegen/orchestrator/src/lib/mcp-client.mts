@@ -17,6 +17,7 @@ export class AgentsMCPClient {
       {
         name: 'agents-mcp-client',
         version: '1.0.0',
+        endpoint: 'http://localhost:5000',
       },
       {
         capabilities: {

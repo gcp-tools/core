@@ -75,7 +75,8 @@ export type DependencyCheckResult = {
 export type CreateGitHubRepoResult = {
   status: 'success' | 'failed'
   message: string
-  repoName?: string
+  githubIdentity: string
+  projectName: string
   repoUrl?: string
   isPrivate?: boolean
   topics?: string[]
@@ -85,7 +86,8 @@ export type CreateGitHubRepoResult = {
 export type SetupGitHubSecretsResult = {
   status: 'success' | 'failed'
   message: string
-  repoName: string
+  githubIdentity: string
+  projectName: string
   results: Array<{
     name: string
     type: string

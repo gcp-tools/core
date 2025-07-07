@@ -1,26 +1,46 @@
 import { exec as execCb } from 'node:child_process'
 import { promisify } from 'node:util'
 import { z } from 'zod'
+import { createRepoName } from '../../lib/repo.mjs'
 
 const execAsync = promisify(execCb)
 
 export const CreateGitHubEnvironmentsInputSchema = z.object({
-  repoName: z.string(),
+  githubIdentity: z.string(),
+  projectName: z.string(),
 })
 export type CreateGitHubEnvironmentsInput = z.infer<
   typeof CreateGitHubEnvironmentsInputSchema
 >
 
-export async function createGitHubEnvironments(input: unknown) {
+export type CreateGitHubEnvironmentsResult = {
+  status: 'success' | 'partial' | 'failed'
+  githubIdentity: string
+  projectName: string
+  message: string
+  results: Array<{ env: string; status: string; error?: string }>
+  error?: string
+}
+
+export async function createGitHubEnvironments(
+  input: unknown,
+): Promise<CreateGitHubEnvironmentsResult> {
   const parsed = CreateGitHubEnvironmentsInputSchema.safeParse(input)
   if (!parsed.success) {
     return {
       status: 'failed',
+      githubIdentity: '',
+      projectName: '',
       message: 'Invalid input',
       error: parsed.error.message,
+      results: [],
     }
   }
-  const { repoName } = parsed.data
+  const args = parsed.data
+  const repoName = createRepoName({
+    githubIdentity: args.githubIdentity,
+    projectName: args.projectName,
+  })
   const environments = ['dev', 'test', 'sbx', 'prod']
   const results: Array<{ env: string; status: string; error?: string }> = []
 
@@ -59,6 +79,8 @@ export async function createGitHubEnvironments(input: unknown) {
   )
   return {
     status: allCreated ? 'success' : 'partial',
+    githubIdentity: args.githubIdentity,
+    projectName: args.projectName,
     message: allCreated
       ? 'All environments created or already exist.'
       : 'Some environments failed to create.',
