@@ -12,20 +12,18 @@ export const SetupGitHubSecretsInputSchema = z.object({
   projectId: z.string(),
   serviceAccount: z.string(),
   workloadIdentityPool: z.string(),
-  projectNumber: z.string().optional(),
-  workloadIdentityProviders: z
-    .object({
-      dev: z.string().optional(),
-      test: z.string().optional(),
-      sbx: z.string().optional(),
-      prod: z.string().optional(),
-    })
-    .optional(),
+  projectNumber: z.string(),
+  workloadIdentityProviders: z.object({
+    dev: z.string(),
+    test: z.string(),
+    sbx: z.string(),
+    prod: z.string(),
+  }),
   regions: z.string(),
-  orgId: z.string().optional(),
-  billingAccount: z.string().optional(),
-  ownerEmails: z.string().optional(),
-  developerIdentity: z.string().optional(),
+  orgId: z.string(),
+  billingAccount: z.string(),
+  ownerEmails: z.string(),
+  developerIdentity: z.string(),
 })
 export type SetupGitHubSecretsInput = z.infer<
   typeof SetupGitHubSecretsInputSchema
@@ -34,6 +32,7 @@ export type SetupGitHubSecretsInput = z.infer<
 export async function setupGitHubSecrets(
   input: unknown,
 ): Promise<SetupGitHubSecretsResult> {
+  console.error('[DEBUG] setupGitHubSecrets RAW input:', JSON.stringify(input, null, 2))
   const parsed = SetupGitHubSecretsInputSchema.safeParse(input)
   if (!parsed.success) {
     return {
@@ -112,7 +111,7 @@ export async function setupGitHubSecrets(
         })
       }
       // Set GCP_TOOLS_WORKLOAD_IDENTITY_PROVIDER secret
-      const provider = args.workloadIdentityProviders?.[env]
+      const provider = args.workloadIdentityProviders[env]
       if (provider) {
         try {
           const cmd = `gh secret set GCP_TOOLS_WORKLOAD_IDENTITY_PROVIDER --repo ${repoName} --env ${env} --body "${provider}"`

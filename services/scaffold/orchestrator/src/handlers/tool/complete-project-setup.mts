@@ -176,7 +176,7 @@ export async function completeProjectSetup(
 
     // Step 2: Create GitHub repository
     console.error('Step 2: Creating GitHub repository...')
-    const repoResult = await createGitHubRepo({
+    const createGitHubRepoInput = {
       githubIdentity: args.githubIdentity,
       projectName: args.projectName,
       description:
@@ -185,7 +185,16 @@ export async function completeProjectSetup(
       addReadme: true,
       addGitignore: true,
       addLicense: args.addLicense,
-    })
+    }
+    console.error(
+      '[DEBUG] createGitHubRepo input:',
+      JSON.stringify(createGitHubRepoInput, null, 2),
+    )
+    const repoResult = await createGitHubRepo(createGitHubRepoInput)
+    console.error(
+      '[DEBUG] createGitHubRepo result:',
+      JSON.stringify(repoResult, null, 2),
+    )
 
     if (repoResult.status === 'failed') {
       results.step2 = {
@@ -207,7 +216,7 @@ export async function completeProjectSetup(
 
     // Step 3: Setup GCP foundation project
     console.error('Step 3: Setting up GCP foundation project...')
-    const foundationResult = await runFoundationProjectHandler({
+    const runFoundationProjectHandlerInput = {
       projectName: args.projectName,
       orgId: args.orgId,
       billingAccount: args.billingAccount,
@@ -215,7 +224,18 @@ export async function completeProjectSetup(
       githubIdentity: args.githubIdentity,
       developerIdentity: args.developerIdentity,
       ownerEmails: args.ownerEmails,
-    })
+    }
+    console.error(
+      '[DEBUG] runFoundationProjectHandler input:',
+      JSON.stringify(runFoundationProjectHandlerInput, null, 2),
+    )
+    const foundationResult = await runFoundationProjectHandler(
+      runFoundationProjectHandlerInput,
+    )
+    console.error(
+      '[DEBUG] runFoundationProjectHandler result:',
+      JSON.stringify(foundationResult, null, 2),
+    )
 
     if (foundationResult.status === 'failed') {
       results.step3 = {
@@ -236,10 +256,22 @@ export async function completeProjectSetup(
     }
 
     // Step 3.5: Create GitHub environments before secrets
-    const envResult = await createGitHubEnvironments({
+    const createGitHubEnvironmentsInput = {
       githubIdentity: args.githubIdentity,
       projectName: args.projectName,
-    })
+    }
+    console.error(
+      '[DEBUG] createGitHubEnvironments input:',
+      JSON.stringify(createGitHubEnvironmentsInput, null, 2),
+    )
+    const envResult = await createGitHubEnvironments(
+      createGitHubEnvironmentsInput,
+    )
+    console.error(
+      '[DEBUG] createGitHubEnvironments result:',
+      JSON.stringify(envResult, null, 2),
+    )
+
     if (envResult.status !== 'success') {
       results.step4 = {
         status: 'partial',
@@ -273,16 +305,29 @@ export async function completeProjectSetup(
 
     // Step 4: Setup GitHub secrets
     console.error('Step 4: Setting up GitHub secrets...')
-    const secretsResult = await setupGitHubSecrets({
-      ...foundationResult,
+    const setupGitHubSecretsInput = {
       githubIdentity: args.githubIdentity,
       projectName: args.projectName,
+      projectId: foundationResult.projectId,
+      serviceAccount: foundationResult.serviceAccount,
+      workloadIdentityPool: foundationResult.workloadIdentityPool,
+      projectNumber: foundationResult.projectNumber,
+      workloadIdentityProviders: foundationResult.workloadIdentityProviders,
       regions: args.regions,
       orgId: args.orgId,
       billingAccount: args.billingAccount,
       ownerEmails: args.ownerEmails,
       developerIdentity: args.developerIdentity,
-    })
+    }
+    console.error(
+      '[DEBUG] setupGitHubSecrets input:',
+      JSON.stringify(setupGitHubSecretsInput, null, 2),
+    )
+    const secretsResult = await setupGitHubSecrets(setupGitHubSecretsInput)
+    console.error(
+      '[DEBUG] setupGitHubSecrets result:',
+      JSON.stringify(secretsResult, null, 2),
+    )
 
     if (secretsResult.status === 'failed') {
       results.step4 = {
@@ -304,11 +349,20 @@ export async function completeProjectSetup(
 
     // Step 5: Create skeleton app
     console.error('Step 5: Creating skeleton app...')
-    const skeletonResult = await createSkeletonApp({
+    const createSkeletonAppInput = {
       githubIdentity: args.githubIdentity,
       projectName: args.projectName,
       codePath: args.codePath,
-    })
+    }
+    console.error(
+      '[DEBUG] createSkeletonApp input:',
+      JSON.stringify(createSkeletonAppInput, null, 2),
+    )
+    const skeletonResult = await createSkeletonApp(createSkeletonAppInput)
+    console.error(
+      '[DEBUG] createSkeletonApp result:',
+      JSON.stringify(skeletonResult, null, 2),
+    )
     results.step5 = {
       status: skeletonResult.status,
       message: skeletonResult.message,
