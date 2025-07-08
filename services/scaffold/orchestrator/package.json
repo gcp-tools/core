@@ -32,6 +32,7 @@
     "zod": "^3.25.67"
   },
   "dependencies": {
+    "winston": "^3.17.0",
     "zod-to-json-schema": "^3.24.6"
   },
   "engines": {

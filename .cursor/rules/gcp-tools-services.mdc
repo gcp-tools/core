@@ -130,7 +130,7 @@ type IoError = NotFoundError |...
 ## Service Structure Template
 
 ```
-services/[service-name]/
+services/[service-name]/[component-name]
 ├── src/
 │   ├── handlers/           # Request handlers (control flow)
 │   ├── lib/
@@ -150,6 +150,20 @@ services/[service-name]/
 ├── Dockerfile
 └── README.md
 ```
+
+Eg,
+
+services/
+  invoices/ : service-name
+    api/ : component-name
+      src/
+    backend/ : component-name
+      src/
+    pubsub-handler/ :component-name
+      src/
+    ui/ : component-name
+      src/
+
 
 ## Code Examples
 
