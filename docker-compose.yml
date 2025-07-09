@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  codegen-agents:
+    container_name: codegen-agents
+    build:
+      context: ./services/codegen/agents
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - MCP_SERVER_PORT=8080
+    # Add other env vars as needed, e.g. for dev
+    env_file:
+      - ./services/codegen/agents/.env
+    restart: unless-stopped
+    # Uncomment to mount .env for local development
+    # env_file:
+    #   - ./services/codegen/agents/.env
+    # Optional: mount pip cache for faster builds
+    # volumes:
+    #   - pip_cache:/root/.cache/pip
+    working_dir: /app
+    networks:
+      - default
+
+# Optional named volume for pip cache
+# volumes:
+#   pip_cache:

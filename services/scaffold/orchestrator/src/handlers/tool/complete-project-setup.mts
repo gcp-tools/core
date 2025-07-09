@@ -214,6 +214,55 @@ export async function completeProjectSetup(
       details: repoResult,
     }
 
+    // Add after foundationResult is received, before proceeding to GitHub secrets
+    // Wait for dev Workload Identity Provider to be ready
+    async function waitForWorkloadIdentityProviderReady({
+      projectId,
+      poolId,
+      providerId,
+      timeoutMs = 120000,
+      pollIntervalMs = 5000,
+    }: {
+      projectId: string
+      poolId: string
+      providerId: string
+      timeoutMs?: number
+      pollIntervalMs?: number
+    }) {
+      const start = Date.now()
+      let attempt = 0
+      while (Date.now() - start < timeoutMs) {
+        attempt++
+        try {
+          console.error(
+            `[wait] Checking for WIP provider dev (attempt ${attempt})...`,
+          )
+          const { stdout } = await execAsync(
+            `gcloud iam workload-identity-pools providers describe ${providerId} --project=${projectId} --workload-identity-pool=${poolId} --location=global --format=json`,
+          )
+          const provider = JSON.parse(stdout)
+          if (
+            provider &&
+            (provider.state === undefined || provider.state === 'ACTIVE')
+          ) {
+            console.error(
+              `[wait] WIP provider dev is ready after ${((Date.now() - start) / 1000).toFixed(1)}s.`,
+            )
+            return true
+          }
+          console.error(
+            `[wait] WIP provider dev found but not active (state: ${provider.state}). Retrying...`,
+          )
+        } catch (e) {
+          console.error('[wait] WIP provider dev not found yet. Retrying...')
+        }
+        await new Promise((res) => setTimeout(res, pollIntervalMs))
+      }
+      throw new Error(
+        `Workload Identity Provider 'dev' not ready after ${timeoutMs / 1000}s`,
+      )
+    }
+
     // Step 3: Setup GCP foundation project
     console.error('Step 3: Setting up GCP foundation project...')
     const runFoundationProjectHandlerInput = {
@@ -236,6 +285,50 @@ export async function completeProjectSetup(
       '[DEBUG] runFoundationProjectHandler result:',
       JSON.stringify(foundationResult, null, 2),
     )
+
+    // Wait for dev WIP to be ready before proceeding
+    if (
+      foundationResult?.projectId &&
+      foundationResult.workloadIdentityProviders &&
+      foundationResult.workloadIdentityProviders.dev
+    ) {
+      const devProviderResource = foundationResult.workloadIdentityProviders.dev
+      // Extract poolId and providerId from resource string
+      // Format: projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID
+      const match = devProviderResource.match(
+        /workloadIdentityPools\/(.+)\/providers\/(.+)$/,
+      )
+      if (match) {
+        const poolId = match[1]
+        const providerId = match[2]
+        try {
+          await waitForWorkloadIdentityProviderReady({
+            projectId: foundationResult.projectId,
+            poolId,
+            providerId,
+          })
+        } catch (e) {
+          results.step3 = {
+            status: 'failed',
+            message: `Dev Workload Identity Provider not ready: ${e instanceof Error ? e.message : String(e)}`,
+            details: foundationResult,
+          }
+          return {
+            status: 'failed',
+            message: `Dev Workload Identity Provider not ready: ${e instanceof Error ? e.message : String(e)}`,
+            results,
+          }
+        }
+      } else {
+        console.error(
+          '[wait] Could not parse poolId/providerId from dev WIP resource string. Skipping wait.',
+        )
+      }
+    } else {
+      console.error(
+        '[wait] No dev WIP resource found in foundationResult. Skipping wait.',
+      )
+    }
 
     if (foundationResult.status === 'failed') {
       results.step3 = {

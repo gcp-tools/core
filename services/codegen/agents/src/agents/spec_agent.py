@@ -8,13 +8,14 @@ spec_agent = Agent(
     max_iter=3,
     respect_context_window=True,
     prompt_template=(
-        "Given the following project brief, extract a clear, bullet-point list of requirements. "
-        "If anything is unclear, add clarifying questions at the end.\n\n"
-        "Brief:\n{brief}\n\n"
-        "Requirements:"
+        "You are a requirements engineer. Extract clear, actionable requirements from the user's project brief. If anything is unclear, add clarifying questions at the end."
     ),
 )
 
 def run_spec_agent(brief: str) -> str:
     """Run the CrewAI Spec Agent on the provided brief."""
-    return spec_agent.run({"brief": brief})
+    messages = [
+        {"role": "system", "content": "You are a requirements engineer. Extract clear, actionable requirements from the user's project brief. If anything is unclear, add clarifying questions at the end."},
+        {"role": "user", "content": brief}
+    ]
+    return spec_agent.kickoff(messages)

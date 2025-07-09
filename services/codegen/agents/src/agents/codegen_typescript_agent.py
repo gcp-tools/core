@@ -59,15 +59,21 @@ prompt_template = (
 )
 
 ts_codegen_agent = Agent(
-    role="TypeScript Backend Codegen Agent",
-    goal="Generate clean, idiomatic TypeScript backend code for cloud-native services based on the provided plan section.",
-    backstory="You are an expert TypeScript backend engineer, skilled at building robust APIs and services for GCP.",
+    role="TypeScript Code Generator",
+    goal="Write clean, idiomatic TypeScript code for the user's project plan.",
+    backstory="You are an expert TypeScript developer.",
     verbose=True,
     max_iter=3,
     respect_context_window=True,
-    prompt_template=prompt_template,
+    prompt_template=(
+        "You are a TypeScript code generator. Write clean, idiomatic TypeScript code for the user's project plan."
+    ),
 )
 
 def run_ts_codegen_agent(plan: str) -> str:
     """Run the CrewAI TypeScript Codegen Agent on the provided plan section."""
-    return ts_codegen_agent.run({"plan": plan})
+    messages = [
+        {"role": "system", "content": "You are a TypeScript code generator. Write clean, idiomatic TypeScript code for the user's plan."},
+        {"role": "user", "content": plan}
+    ]
+    return ts_codegen_agent.kickoff(messages)

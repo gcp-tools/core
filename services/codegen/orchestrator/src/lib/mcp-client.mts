@@ -1,4 +1,5 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import type {
   CodeResult,
   InfraResult,
@@ -11,34 +12,37 @@ import type {
 
 export class AgentsMCPClient {
   private client: Client
+  private connected: boolean = false
 
   constructor() {
-    this.client = new Client(
-      {
-        name: 'agents-mcp-client',
-        version: '1.0.0',
-        endpoint: 'http://localhost:5000',
-      },
-      {
-        capabilities: {
-          tools: {},
-          resources: {},
-          prompts: {},
-        },
-      },
-    )
+    this.client = new Client({
+      name: 'agents-mcp-client',
+      version: '1.0.0',
+    })
+  }
+
+  async init() {
+    if (!this.connected) {
+      const transport = new StreamableHTTPClientTransport(
+        new URL('http://localhost:8080/mcp/')
+      )
+      await this.client.connect(transport)
+      this.connected = true
+    }
   }
 
   /**
    * Generate project specifications from a brief description
    */
   async generateSpec(projectDescription: string): Promise<SpecResult> {
+    await this.init()
+    console.error('projectDescription', projectDescription)
     try {
       const result = await this.client.callTool({
         name: 'generate_spec',
-        arguments: { project_description: projectDescription },
+        arguments: { arguments: { project_description: projectDescription } },
       })
-
+      console.error('result', result)
       return {
         requirements:
           typeof result.requirements === 'string'
@@ -59,10 +63,11 @@ export class AgentsMCPClient {
    * Generate a detailed project plan from requirements
    */
   async generatePlan(requirements: string): Promise<PlanResult> {
+    await this.init()
     try {
       const result = await this.client.callTool({
         name: 'generate_plan',
-        arguments: { requirements },
+        arguments: { arguments: { requirements } },
       })
 
       return {
@@ -88,10 +93,11 @@ export class AgentsMCPClient {
     plan: string,
     language: 'typescript' | 'python' | 'rust' | 'react' = 'typescript',
   ): Promise<CodeResult> {
+    await this.init()
     try {
       const result = await this.client.callTool({
         name: 'generate_code',
-        arguments: { plan, language },
+        arguments: { arguments: { plan, language } },
       })
 
       return {
@@ -117,10 +123,11 @@ export class AgentsMCPClient {
    * Generate infrastructure as code based on a project plan
    */
   async generateInfra(plan: string): Promise<InfraResult> {
+    await this.init()
     try {
       const result = await this.client.callTool({
         name: 'generate_infra',
-        arguments: { plan },
+        arguments: { arguments: { plan } },
       })
 
       return {
@@ -143,10 +150,11 @@ export class AgentsMCPClient {
    * Generate test code for a given artifact
    */
   async runTests(artifact: string): Promise<TestResult> {
+    await this.init()
     try {
       const result = await this.client.callTool({
         name: 'run_tests',
-        arguments: { artifact },
+        arguments: { arguments: { artifact } },
       })
 
       return {
@@ -169,10 +177,11 @@ export class AgentsMCPClient {
    * Review code and provide feedback
    */
   async reviewCode(artifact: string): Promise<ReviewResult> {
+    await this.init()
     try {
       const result = await this.client.callTool({
         name: 'review_code',
-        arguments: { artifact },
+        arguments: { arguments: { artifact } },
       })
 
       return {
@@ -195,10 +204,11 @@ export class AgentsMCPClient {
    * Generate deployment and operations plan for artifacts
    */
   async deployOps(artifacts: string): Promise<OpsResult> {
+    await this.init()
     try {
       const result = await this.client.callTool({
         name: 'deploy_ops',
-        arguments: { artifacts },
+        arguments: { arguments: { artifacts } },
       })
 
       return {
@@ -221,6 +231,7 @@ export class AgentsMCPClient {
    * Test connection to the agents MCP server
    */
   async testConnection(): Promise<boolean> {
+    await this.init()
     try {
       // Try to list tools to test connection
       await this.client.listTools()

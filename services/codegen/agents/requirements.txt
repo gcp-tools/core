@@ -1,7 +1,6 @@
-git+https://github.com/modelcontextprotocol/python-sdk.git
 pydantic
 pytest
 python-dotenv
 crewai
 ruff
-modelcontextprotocol
+fastmcp==2.10.3
