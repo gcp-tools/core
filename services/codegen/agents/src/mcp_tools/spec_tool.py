@@ -1,10 +1,10 @@
-from agents.spec_agent import run_spec_agent
+from agents.spec_agent import run_spec_agent, Message
+from typing import List
 
-async def generate_spec(arguments):
-    project_description = arguments["project_description"]
+async def generate_spec(messages: List[Message]):
     try:
-        requirements = run_spec_agent(project_description)
-        print('requirements', requirements)
-        return {"requirements": requirements}
+        data = run_spec_agent(messages)
+        print('data', data)
+        return {"data": data}
     except Exception as e:
-        return {"requirements": "", "error": str(e)}
+        return {"data": "", "error": str(e)}

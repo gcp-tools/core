@@ -12,13 +12,7 @@
     "test": "vitest run --passWithNoTests",
     "prepublishOnly": "npm run build"
   },
-  "keywords": [
-    "mcp",
-    "gcp",
-    "cdktf",
-    "infrastructure",
-    "terraform"
-  ],
+  "keywords": ["mcp", "gcp", "cdktf", "infrastructure", "terraform"],
   "author": "GCP Tools Team",
   "license": "MIT",
   "devDependencies": {
@@ -38,8 +32,5 @@
   "engines": {
     "node": ">=22.0.0"
   },
-  "files": [
-    "dist/**/*",
-    "README.md"
-  ]
+  "files": ["dist/**/*", "README.md"]
 }

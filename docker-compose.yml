@@ -10,7 +10,7 @@ services:
       - "8080:8080"
     environment:
       - MCP_SERVER_PORT=8080
-    # Add other env vars as needed, e.g. for dev
+      # Add other env vars as needed, e.g. for dev
     env_file:
       - ./services/codegen/agents/.env
     restart: unless-stopped
