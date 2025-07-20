@@ -9,7 +9,7 @@ import {
   type ReadResourceRequest,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
-import { toolHandlers } from './handlers/tool/handler-registry.mjs'
+import { toolHandlers } from './tools/handler-registry.mjs'
 import { toolRegistry } from './tools/index.mjs'
 import type { MCPServerConfig } from './types.mjs'
 

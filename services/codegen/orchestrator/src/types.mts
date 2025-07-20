@@ -1,8 +1,7 @@
 import type { Tool as MCPTool } from '@modelcontextprotocol/sdk/types.js'
+import { z } from 'zod/v4'
 
-// Re-export the MCP Tool type directly to ensure compatibility
 export type Tool = MCPTool
-
 export interface MCPServerConfig {
   name: string
   version: string
@@ -13,191 +12,207 @@ export interface MCPServerConfig {
   }
 }
 
-// Workflow state types
-// export type WorkflowState =
-//   | 'spec_generated'
-//   | 'plan_generated'
-//   | 'plan_approved'
-//   | 'code_generated'
-//   | 'infra_generated'
-//   | 'tests_passed'
-//   | 'code_reviewed'
-//   | 'deployment_ready'
-//   | 'deployment_approved'
-//   | 'deployed'
-//   | 'failed'
+export const llmMessageSchema = z.object({
+  role: z.union([z.literal('user'), z.literal('agent')]),
+  content: z.string(),
+})
+export type LLMMessage = z.infer<typeof llmMessageSchema>
 
-// Tool argument types are defined as Zod schemas in their respective handlers
+export const llmSpecResponseSchema = z.object({
+  role: z.literal('agent'),
+  requirements: z.array(z.string()),
+  questions: z.array(z.string()),
+})
+export type LLMSpecResponse = z.infer<typeof llmSpecResponseSchema>
 
-// Result types
-// export interface FullPipelineResult {
-//   status: 'awaiting_approval' | 'completed' | 'failed'
-//   approval_id?: string
-//   workflow_id?: string
-//   spec?: SpecResult
-//   plan?: PlanResult
-//   code?: CodeResult
-//   infra?: InfraResult
-//   tests?: TestResult
-//   review?: ReviewResult
-//   deployment?: OpsResult
-//   error?: string
-//   message?: string
+export const llmPlanResponseSchema = z.object({
+  role: z.literal('agent'),
+  plan: z.array(z.string()),
+})
+export type LLMPlanResponse = z.infer<typeof llmPlanResponseSchema>
+
+export const specStateSchema = z.array(
+  z.object({
+    role: z.union([z.literal('user'), z.literal('agent')]),
+    context: z.union([
+      z.literal('brief'),
+      z.literal('answers'),
+      z.literal('requirements'),
+      z.literal('questions'),
+    ]),
+    content: z.array(z.string()),
+  }),
+)
+export type SpecState = z.infer<typeof specStateSchema>
+
+export const planStateSchema = z.array(
+  z.object({
+    role: z.union([z.literal('user'), z.literal('agent')]),
+    context: z.union([z.literal('plan'), z.literal('feedback')]),
+    content: z.array(z.string()),
+  }),
+)
+export type PlanState = z.infer<typeof planStateSchema>
+
+// Simplified state schema - no optionals, clear structure
+export const stateSchema = z.object({
+  META: z.object({
+    githubIdentifier: z.string(),
+    projectName: z.string(),
+    codePath: z.string(),
+    version: z.number(),
+    timestamp: z.string(),
+    outcome: z.string(),
+  }),
+  GENERATE_SPEC: specStateSchema,
+  GENERATE_PLAN: planStateSchema,
+})
+
+export type State = z.infer<typeof stateSchema>
+
+// // Legacy schemas for backward compatibility (can be removed later)
+// export const specMessageSchema = z.object({
+//   content: z.array(
+//     z.object({
+//       text: z.array(z.string()),
+//       context: z.union([
+//         z.literal('brief'),
+//         z.literal('answers'),
+//       ]),
+//     }),
+//   ),
+//   role: z.literal('user'),
+// })
+// export type SpecMessage = z.infer<typeof specMessageSchema>
+
+// export const specResponseSchema = z.object({
+//   content: z.array(
+//     z.object({
+//       text: z.array(z.string()),
+//       context: z.union([
+//         z.literal('requirements'),
+//         z.literal('questions'),
+//       ]),
+//     }),
+//   ),
+//   role: z.literal('agent'),
+// })
+// export type SpecResponse = z.infer<typeof specResponseSchema>
+
+// export const planMessageSchema = z.object({
+//   content: z.array(
+//     z.object({
+//       text: z.array(z.string()),
+//       context: z.union([
+//         z.literal('requirements'),
+//         z.literal('feedback'),
+//       ]),
+//     }),
+//   ),
+//   role: z.literal('user'),
+// })
+// export type PlanMessage = z.infer<typeof planMessageSchema>
+
+// export const planResponseSchema = z.object({
+//   content: z.array(
+//     z.object({
+//       text: z.array(z.string()),
+//       context: z.union([
+//         z.literal('plan'),
+//       ]),
+//     }),
+//   ),
+//   role: z.literal('agent'),
+// })
+// export type PlanResponse = z.infer<typeof planResponseSchema>
+
+// export const codeSchemaLegacy = z.object({
+//   content: z.object({
+//     code: z.array(z.object({
+//       code: z.string(),
+//       filename: z.string(),
+//       language: z.string(),
+//     })),
+//     context: 'code',
+//   }),
+//   role: z.literal('agent'),
+// })
+
+// export const testSchemaLegacy = z.object({
+//   content: z.object({
+//     tests: z.array(z.object({
+//       code: z.string(),
+//       filename: z.string(),
+//       language: z.string(),
+//     })),
+//     context: 'tests',
+//   }),
+//   role: z.literal('agent'),
+// })
+
+// export const componentSchema = z.object({
+//   name: z.string(),
+//   description: z.string(),
+//   code: z.array(codeSchemaLegacy),
+//   tests: z.array(testSchemaLegacy),
+// })
+
+// export const serviceSchema = z.object({
+//   name: z.string(),
+//   description: z.string(),
+//   components: z.array(componentSchema),
+// })
+
+// export type Outcome =
+//   | 'ERROR'
+//   | 'OK'
+//   | 'HITL'
+//   | 'PASS'
+//   | 'FAIL'
+//   | 'TESTS'
+//   | 'CODE'
+
+// export type ToolSuccess<
+//   S extends keyof State,
+//   O extends Outcome,
+// > = {
+//   result: O,
+//   state: State[S]
+//   type: string,
 // }
 
-// export interface ApprovePlanResult {
-//   status: 'approved' | 'rejected' | 'error'
+// export type ToolError<
+//   S extends keyof State,
+// > = {
+//   cause: string | any[]
+//   error?: Error
 //   message: string
-//   workflow_id?: string
+//   state: State[S]
+//   result: 'ERROR',
+//   type: string,
 // }
 
-// export interface GenerateCodeResult {
-//   status: 'success' | 'error'
-//   code?: string
-//   language?: string
-//   error?: string
+// export type ToolResult<
+//   S extends keyof State,
+//   O extends Outcome,
+// > = ToolSuccess<S, O> | ToolError<S>
+
+// export type ToolHandler<
+//   S extends keyof State,
+//   R,
+//   O extends Outcome,
+// > = (
+//   state: State[S],
+//   stateSchema: ZodType<State[S]>,
+//   agentResonseSchema: ZodType<R>,
+// ) => Promise<ToolResult<S, O>>
+
+// type ToolAgentFn<R> = (state: State, stateSchema: ZodType<State>, agentResponseSchema: ZodType<R>) => State
+// type ToolAgentHandler = (state: State) => State
+// type MakeToolAgentHandler = <R>(fn: ToolAgentFn<R>, stateSchema: ZodType<State>, agentResponseSchema: ZodType<R>) => ToolAgentHandler
+
+// export const makeToolAgentHandler: MakeToolAgentHandler = (fn, stateSchema, agentResponseSchema) => {
+//   return (state: State) => {
+//     return fn(state, stateSchema, agentResponseSchema)
+//   }
 // }
-
-// export interface GenerateInfraResult {
-//   status: 'success' | 'error'
-//   iac_code?: string
-//   error?: string
-// }
-
-// export interface GenerateTestsResult {
-//   status: 'success' | 'error'
-//   test_code?: string
-//   error?: string
-// }
-
-// export interface ReviewCodeResult {
-//   status: 'success' | 'error'
-//   review_feedback?: string
-//   error?: string
-// }
-
-// export interface DeployOpsResult {
-//   status: 'success' | 'error'
-//   ops_plan?: string
-//   error?: string
-// }
-
-// Workflow state management
-// export interface WorkflowStateData {
-//   id: string
-//   state: WorkflowState
-//   spec?: SpecResult
-//   plan?: PlanResult
-//   code?: CodeResult
-//   infra?: InfraResult
-//   tests?: TestResult
-//   review?: ReviewResult
-//   deployment?: OpsResult
-//   created_at: Date
-//   updated_at: Date
-// }
-
-// MCP Client wrapper types
-export interface AgentsMCPClientConfig {
-  serverUrl?: string
-  timeout?: number
-}
-
-export interface SpecResult {
-  requirements: string
-  status: 'success' | 'error'
-  error?: string
-}
-
-export interface PlanResult {
-  plan: string
-  status: 'success' | 'error'
-  error?: string
-}
-
-export interface CodeResult {
-  code: string
-  language: string
-  status: 'success' | 'error'
-  error?: string
-}
-
-export interface InfraResult {
-  iac_code: string
-  status: 'success' | 'error'
-  error?: string
-}
-
-export interface TestResult {
-  test_code: string
-  status: 'success' | 'error'
-  error?: string
-}
-
-export interface ReviewResult {
-  review_feedback: string
-  status: 'success' | 'error'
-  error?: string
-}
-
-export interface OpsResult {
-  ops_plan: string
-  status: 'success' | 'error'
-  error?: string
-}
-
-// export type DataWithClarifyingQuestions = {
-//   content: string
-//   clarifyingQuestions: string[]
-// }
-
-export type BaseError = {
-  cause?: Error | unknown
-  data?: unknown
-  message: string
-}
-export type ToolRequestError = BaseError & {
-  status: 'TOOL_REQUEST_ERROR'
-}
-export type ToolAgentError = BaseError & {
-  status: 'TOOL_AGENT_ERROR'
-}
-export type ToolError = ToolRequestError | ToolAgentError
-export type ToolSucess<R> = {
-  status: 'SUCCESS'
-  data: R
-}
-export type ToolResult<R> = ToolSucess<R> | ToolError
-export type ToolHandler<R> = (input: unknown) => Promise<ToolResult<R>>
-
-// export type ClientRequestError = BaseError & {
-//   status: 'CLIENT_REQUEST_ERROR'
-// }
-// export type ClientAgentError = BaseError & {
-//   status: 'TOOL_AGENT_ERROR'
-// }
-// export type ClientError =
-//   ClientRequestError |
-//   ClientAgentError;
-// export type ClientSucess<R> = {
-//   status: 'SUCCESS'
-//   data: R
-// }
-// export type ClientResult<R> =
-//   ClientSucess<R> |
-//   ClientError
-
-/*
-export type ApiSuccess<R> = {
-  code: 'API_SUCCESS'
-  data: R
-}
-export type BaseError = {
-  cause?: Error | unknown
-  data?: unknown
-  message: string
-}
-export type ApiNotFoundError = BaseError & {
-  code: 'NOT_FOUND'
-}
-*/

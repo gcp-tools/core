@@ -34,7 +34,8 @@
     "enabled": true,
     "rules": {
       "recommended": true
-    }
+    },
+    "ignore": ["src/handlers/archive"]
   },
   "vcs": {
     "enabled": true,
