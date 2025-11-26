@@ -1,7 +1,5 @@
 ---
-description: 
-globs: .mts,.ts
-alwaysApply: false
+alwaysApply: true
 ---
 You are an expert in Typescript and nodejs.
 

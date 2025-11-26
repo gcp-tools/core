@@ -1,0 +1,44 @@
+import { z } from 'zod';
+import type { CompleteProjectSetupResult } from '../../types.mjs';
+export declare const CompleteProjectSetupInputSchema: z.ZodObject<{
+    projectName: z.ZodString;
+    orgId: z.ZodString;
+    billingAccount: z.ZodString;
+    regions: z.ZodString;
+    githubIdentity: z.ZodString;
+    developerIdentity: z.ZodString;
+    ownerEmails: z.ZodString;
+    repoDescription: z.ZodOptional<z.ZodString>;
+    isPrivate: z.ZodOptional<z.ZodBoolean>;
+    addLicense: z.ZodOptional<z.ZodString>;
+    includeOptionalDeps: z.ZodOptional<z.ZodBoolean>;
+    codePath: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    projectName: string;
+    codePath: string;
+    githubIdentity: string;
+    orgId: string;
+    billingAccount: string;
+    regions: string;
+    developerIdentity: string;
+    ownerEmails: string;
+    isPrivate?: boolean | undefined;
+    addLicense?: string | undefined;
+    repoDescription?: string | undefined;
+    includeOptionalDeps?: boolean | undefined;
+}, {
+    projectName: string;
+    codePath: string;
+    githubIdentity: string;
+    orgId: string;
+    billingAccount: string;
+    regions: string;
+    developerIdentity: string;
+    ownerEmails: string;
+    isPrivate?: boolean | undefined;
+    addLicense?: string | undefined;
+    repoDescription?: string | undefined;
+    includeOptionalDeps?: boolean | undefined;
+}>;
+export type CompleteProjectSetupInput = z.infer<typeof CompleteProjectSetupInputSchema>;
+export declare function completeProjectSetup(input: unknown): Promise<CompleteProjectSetupResult>;

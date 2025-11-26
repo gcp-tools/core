@@ -1,6 +1,0 @@
-pydantic
-pytest
-python-dotenv
-crewai
-ruff
-fastmcp==2.10.3

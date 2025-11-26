@@ -1,0 +1,40 @@
+{
+  "name": "developer",
+  "version": "0.1.0",
+  "description": "Developer MCP server orchestrating brief-to-deploy workflows.",
+  "main": "dist/server.mjs",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --pretty",
+    "check-types": "tsc --build tsconfig.json tsconfig.test.json",
+    "dev": "tsx watch src/index.mts",
+    "lint": "biome check src --write --unsafe && npm run check-types",
+    "start": "node dist/server.mjs",
+    "test": "vitest run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "fastmcp": "^3.22.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.5",
+    "@types/chai": "^5.2.3",
+    "@types/deep-eql": "^4.0.2",
+    "@types/estree": "^1.0.8",
+    "@types/json-schema": "^7.0.15",
+    "@types/minimist": "^1.2.5",
+    "@types/node": "^24.10.0",
+    "@types/normalize-package-data": "^2.4.4",
+    "@types/semver": "^7.7.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.4",
+    "@typescript-eslint/parser": "^8.46.4",
+    "eslint": "^9.39.1",
+    "tsup": "^8.3.5",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.8"
+  }
+}

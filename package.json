@@ -15,8 +15,7 @@
     "test": "npm run test --if-present --workspace ./libs --workspace ./services",
     "test:watch": "npm run test:watch --if-present --workspace ./libs --workspace ./services",
     "upgrade": "npm run upgrade:cdktf && npm run upgrade:gcptools",
-    "upgrade:cdktf": "npm i cdktf@latest cdktf-cli@latest && npm run upgrade:cdktf --if-present --workspaces",
-    "upgrade:gcptools": "npm i @gcp-tools/cdktf@latest && npm run upgrade:gcptools --if-present --workspaces"
+    "upgrade:cdktf": "npm i cdktf@latest cdktf-cli@latest && npm run upgrade:cdktf --if-present --workspaces"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "principles",
+    "path": "00-principles.md",
+    "description": "Core architectural principles and patterns (Result types, factory functions, layered architecture)"
+  },
+  {
+    "id": "platform",
+    "path": "01-platform.md",
+    "description": "GCP project structure, service layout, and file organization patterns"
+  },
+  {
+    "id": "patterns",
+    "path": "02-patterns.md",
+    "description": "TypeScript standards, function signatures, and layer-specific implementation patterns"
+  },
+  {
+    "id": "code-quality",
+    "path": "03-quality.md",
+    "description": "Testing standards, code style, naming conventions, and quality checklists"
+  },
+  {
+    "id": "iac",
+    "path": "04-infrastructure.md",
+    "description": "CDKTF patterns, workspace structure, and deployment workflows"
+  },
+  {
+    "id": "workflow",
+    "path": "05-workflow.md",
+    "description": "Phase-specific workflows, decision trees, and verification checklists"
+  },
+  {
+    "id": "advanced",
+    "path": "06-advanced.md",
+    "description": "Advanced patterns for extending gcp-tools/hono library"
+  }
+]

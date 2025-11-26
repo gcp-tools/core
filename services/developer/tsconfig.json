@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "composite": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.mts", "package.json"],
+  "exclude": ["src/**/*.test.mts"]
+}

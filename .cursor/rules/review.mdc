@@ -1,7 +1,5 @@
 ---
-description:
-globs:
-alwaysApply: true
+alwaysApply: false
 ---
 When designing architecture and writing code please follow the principles outlined below.
 

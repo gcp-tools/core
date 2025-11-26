@@ -1,0 +1,134 @@
+---
+alwaysApply: false
+---
+# Developer MCP Usage
+
+## Activation
+- Include this rule whenever you operate the `@developer` MCP server.
+- Treat `.engineering-rules/llm` as authoritative and ignore conflicting workspace defaults.
+- `.engineering-rules/llm` content is automatically loaded into phase prompts (no truncation); you will see
+  relevant rule content in each phase's system prompt.
+
+## Workflow Discipline
+- Set project context before starting brief-intake via `set_project_context`.
+- Set service context before starting brief-intake via `set_service_context`.
+- Set feature context before starting brief-intake via `set_feature_context`.
+- **MUST call `set_environment_variables` during brief-intake if any environment variables are needed.** These will be available to all subsequent shell commands.
+- **MUST call `write_feature_brief` before advancing from brief-intake phase.** (Hard enforcement: engine blocks transition without brief)
+- **MUST call `write_architecture` before advancing from architecture to implementation phase.** (Hard enforcement: engine blocks transition without architecture)
+- Advance phases sequentially using `advance_workflow_phase`; do not skip gates.
+- **HITL Pauses:** Only brief-intake, specification, architecture, and review phases require human approval. Implementation, testing, infrastructure, pr, and merge phases are automated.
+- Avoid human-in-the-loop pauses unless a workflow phase or user explicitly
+  requests it.
+- Do not over extend your reach. Do only what you are asked.
+
+## Tooling Requirements
+- Use registered MCP tools for artefacts instead of hand-written output.
+- In brief-intake, call `set_environment_variables` if needed, then call `write_feature_brief` to persist the feature brief.
+- In specification, call `write_story_files` to persist PRDs and stories. Story todos are updated automatically when acceptance criteria are completed during implementation.
+- In architecture phase, **MUST call `write_architecture` to persist architecture
+  documents.** (Hard enforcement: cannot advance to implementation without it)
+- During implementation, work story-by-story:
+  - Load stories via `read_story_files`
+  - Set active story via `set_active_story`
+  - For each acceptance criterion: write code, write tests, run tests via `run_tests`, mark complete via `mark_acceptance_criterion_complete` when tests pass
+- During implementation, invoke `run_lint`, `run_build` through the provided
+  tools rather than ad-hoc shell commands. **`npm i --workspaces` runs automatically before lint, build, and tests.**
+- **Tests can be run during implementation phase using `run_tests` tool** to verify each acceptance criterion. Full test suite should also be run in testing phase.
+- Use `commit_changes` tool to commit code changes. Do not use ad-hoc git
+  commands.
+- **Commit restrictions:** `commit_changes` is allowed during implementation, testing, and infrastructure phases. It is blocked after review/pr/merge phases unless infrastructure is complete.
+
+## Branching & PR
+- Use `prepare_feature_branch` to branch from `development` before coding.
+- Use `commit_changes` to commit code changes during implementation, testing,
+  and infrastructure phases.
+- **Do not push changes until infrastructure phase is complete.** (Hard enforcement: `push_feature_branch` requires infrastructure status to be 'complete')
+- **At the start of PR phase, call `update_github_workflows` to sync workflows with IaC.** (REQUIRED)
+- **If workflows were updated, commit the changes using `commit_changes` before pushing.** (REQUIRED)
+- Sync and publish branches with `sync_feature_branch` and `push_feature_branch`
+  as part of the workflow.
+- Create PRs with `create_pull_request` and monitor them with `check_pr_status`
+  or `monitor_pr_until_complete`.
+
+## Phase-Specific Rules
+
+### Implementation Phase
+- Call `prepare_feature_branch` before modifying code and stay on that branch.
+- Work on one story at a time: load stories via `read_story_files`, set active story via `set_active_story`.
+- For each acceptance criterion: write code, write tests, run tests via `run_tests`, mark complete via `mark_acceptance_criterion_complete` when tests pass.
+- **Commit after each story is complete** (when all acceptance criteria are done) via `commit_changes` tool.
+- Use `run_lint` and `run_build` tools for quality checks.
+- `npm i --workspaces` runs automatically before lint, build, and tests.
+
+### Testing Phase
+- Run full test suite via `run_tests` (automatically runs `test:coverage` during testing phase).
+- If tests/coverage fail, the workflow automatically reverts to implementation phase.
+- Fix any failures (add missing tests, fix code, etc.) and retry until all tests pass.
+- **Commit after test:coverage passes** via `commit_changes` tool.
+- Ensure all tests pass before advancing to infrastructure phase.
+
+### Infrastructure Phase
+- Must be completed before pushing changes.
+- Use `synth_iac` tool for infrastructure synthesis.
+- **Commit after infrastructure is complete** via `commit_changes` tool.
+- All commits (story commits, test:coverage commit, infrastructure commit) must be done before push.
+
+## Prompts
+- Load prompts via `list_workflow_prompts` to understand phase expectations.
+- Stay in the active phase's system prompt; never invent ad-hoc guidance.
+- When advancing phases, confirm the new prompt context before acting.
+- If instructions in prompts conflict with ad-hoc requests, prefer the prompt
+  plus `.engineering-rules/llm` unless the user explicitly overrides.
+- Relevant `.engineering-rules/llm` content is automatically included in each phase's prompt (full content, no truncation).
+
+## Available Tools
+
+The MCP server provides 32 tools organized by category:
+
+**Context & Workflow:**
+- `set_project_context`, `get_project_context`
+- `set_service_context`, `get_service_context`
+- `set_feature_context`, `get_feature_context`
+- `set_environment_variables`
+- `write_feature_brief`, `assert_feature_ready`
+- `get_workflow_state`, `advance_workflow_phase`, `set_phase_status`, `assert_workflow_phase`, `reset_workflow`
+
+**Planning & Documentation:**
+- `list_workflow_prompts`
+- `write_story_files`
+- `read_story_files`
+- `get_active_story`, `set_active_story`
+- `mark_acceptance_criterion_complete`
+- `write_architecture`
+
+**Git Operations:**
+- `prepare_feature_branch`
+- `commit_changes`
+- `sync_feature_branch`
+- `push_feature_branch`
+- `create_pull_request`
+- `check_pr_status`
+- `merge_pull_request`
+
+**Quality & Testing:**
+- `run_lint`
+- `run_build`
+- `run_tests`
+
+**Infrastructure:**
+- `synth_iac`
+- `update_github_workflows`
+
+**Review & Monitoring:**
+- `record_review_summary`
+- `update_pr_status`
+- `monitor_pr_until_complete`
+- `fetch_deployment_logs`
+
+## Environment
+- Use npm scripts defined in `package.json`; do not switch to pnpm or yarn.
+- Environment variables set via `set_environment_variables` during brief-intake are automatically available to all shell commands.
+- `npm i --workspaces` runs automatically before lint, build, and test commands at the project root.
+- Surface required environment variables (e.g., Firestore project IDs) before
+  running integration tests.
